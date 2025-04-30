@@ -9,10 +9,10 @@ bowl_state = {
     "left": [
         {"id": 1, "name": "clipA", "size": 1},
         {"id": 2, "name": "clipB", "size": 2},
-        {"id": 3, "name": "clipC", "size": 3}
-        {"id": 4, "name": "clipD", "size": 2}
-        {"id": 5, "name": "clipE", "size": 1}
-        {"id": 6, "name": "clipF", "size": 2}
+        {"id": 3, "name": "clipC", "size": 3},
+        {"id": 4, "name": "clipD", "size": 2},
+        {"id": 5, "name": "clipE", "size": 1},
+        {"id": 6, "name": "clipF", "size": 2},
         {"id": 7, "name": "clipG", "size": 1}
     ],
     "right": []
