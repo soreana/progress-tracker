@@ -55,9 +55,10 @@ const leftClips = ref([])
 const rightClips = ref([])
 let draggedClip = null
 let sourceBowl = null
+const baseURL = `${window.location.protocol}//${window.location.host}/api`;
 
 onMounted(async () => {
-  const response = await axios.get('http://127.0.0.1:5000/get_state')
+  const response = await axios.get(`${baseURL}/get_state`)
   generateClips(response.data.left, leftClips, 'L')
   generateClips(response.data.right, rightClips, 'R')
 })
@@ -90,7 +91,7 @@ async function dropClipTo(destination, event) {
 
   const direction = sourceBowl === 'left' ? 'left_to_right' : 'right_to_left'
   try {
-    await axios.post('http://127.0.0.1:5000/move_clip', {id : clipId , direction})
+    await axios.post(`${baseURL}/move_clip`, {id : clipId , direction})
   } catch (e) {
     console.error("Failed to update backend:", e)
     return
