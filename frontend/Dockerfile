@@ -7,10 +7,10 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
 
-# Install dependencies (clean install for production)
-RUN npm ci --production
+# Install dependencies
+RUN npm i
 
-# Copy all project files (node_modules and other files are excluded via .dockerignore)
+# Copy all project files
 COPY . .
 
 # Build the Vue app for production

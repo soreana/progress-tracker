@@ -7,16 +7,21 @@
         <div class="bowl">
           <h2 class="text-center fw-bold">🎯 To be implemented</h2>
           <div class="bowl-area" @dragover.prevent @drop="(event) => dropClipTo('left', event)">
-            <img
+            <div 
                 v-for="clip in leftClips"
-                :src="'images/paperclip.png'"
-                alt=""
                 :key="clip.id"
-                class="paperclip"
-                :style="{ width: clip.size + 'px', height: clip.size + 'px' }"
+                class="paperclip-container"
                 draggable="true"
                 @dragstart="(event) => dragStart(clip, 'left', event)"
-            />
+            >
+              <img
+                  :src="'images/paperclip.png'"
+                  alt=""
+                  class="paperclip"
+                  :style="{ width: clip.size + 'px', height: clip.size + 'px' }"
+              />
+              <div class="clip-name">{{ clip.name }}</div>
+            </div>
           </div>
         </div>
       </BCol>
@@ -29,16 +34,21 @@
         <div class="bowl">
           <h2 class="text-center fw-bold">🏆 Implemented</h2>
           <div class="bowl-area" @dragover.prevent @drop="(event) => dropClipTo('right', event)">
-            <img
+            <div
                 v-for="clip in rightClips"
-                :src="'images/paperclip.png'"
                 :key="clip.id"
-                class="paperclip"
-                :style="{ width: clip.size + 'px', height: clip.size + 'px' }"
+                class="paperclip-container"
                 draggable="true"
                 @dragstart="(event) => dragStart(clip, 'right', event)"
-                alt=""
-            />
+            >
+              <img
+                  :src="'images/paperclip.png'"
+                  alt=""
+                  class="paperclip"
+                  :style="{ width: clip.size + 'px', height: clip.size + 'px' }"
+              />
+              <div class="clip-name">{{ clip.name }}</div>
+            </div>
           </div>
         </div>
       </BCol>
@@ -55,7 +65,8 @@ const leftClips = ref([])
 const rightClips = ref([])
 let draggedClip = null
 let sourceBowl = null
-const baseURL = `${window.location.protocol}//${window.location.host}/api`;
+// const baseURL = `${window.location.protocol}//${window.location.host}/api`;
+const baseURL = 'http://127.0.0.1:5000';
 
 onMounted(async () => {
   const response = await axios.get(`${baseURL}/get_state`)
@@ -113,7 +124,7 @@ async function dropClipTo(destination, event) {
   padding: 16px;
   border-radius: 16px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  width: 250px;
+  width: 500px;
 }
 
 .bowl-area {
@@ -131,6 +142,24 @@ async function dropClipTo(destination, event) {
 .paperclip {
   border-radius: 50%;
   cursor: grab;
+}
+
+.paperclip-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 6px;
+  cursor: grab;
+}
+
+.clip-name {
+  font-size: 12px;
+  margin-top: 4px;
+  text-align: center;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>
 
