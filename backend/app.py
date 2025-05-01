@@ -1,26 +1,24 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import json
+from pathlib import Path
 
 app = Flask(__name__)
 CORS(app)
 
-# In-memory state with paperclip objects
-bowl_state = {
-    "left": [
-        {"id": 1, "name": "clipA", "size": 1},
-        {"id": 2, "name": "clipB", "size": 2},
-        {"id": 3, "name": "clipC", "size": 3},
-        {"id": 4, "name": "clipD", "size": 2},
-        {"id": 5, "name": "clipE", "size": 1},
-        {"id": 6, "name": "clipF", "size": 2},
-        {"id": 7, "name": "clipG", "size": 1}
-    ],
-    "right": []
-}
+STATE_FILE = Path("bowl_state.json")
+
+def load_state():
+    with STATE_FILE.open() as f:
+        return json.load(f)
+
+def save_state(state):
+    with STATE_FILE.open("w") as f:
+        json.dump(state, f)
 
 @app.route("/get_state", methods=["GET"])
 def get_state():
-    return jsonify(bowl_state)
+    return jsonify(load_state())
 
 @app.route("/move_clip", methods=["POST"])
 def move_clip():
@@ -29,6 +27,8 @@ def move_clip():
         print(data)
         clip_id = int(data.get("id"))
         direction = data.get("direction")
+
+        bowl_state = load_state()
 
         if direction == "left_to_right":
             source, target = "left", "right"
@@ -47,9 +47,12 @@ def move_clip():
         bowl_state[source] = [clip for clip in bowl_state[source] if clip["id"] != clip_id]
         bowl_state[target].append(clip_to_move)
 
+        save_state(bowl_state)
+
         return jsonify(bowl_state), 200
 
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
