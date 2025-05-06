@@ -1,6 +1,14 @@
 <!-- PaperclipBowl.vue (Vue 3 + Composition API) -->
 <template>
   <BContainer class="row justify-content-center">
+    <!-- Error Message Alert -->
+    <div class="error-message" v-if="showError">
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ errorMessage }}
+        <button type="button" class="btn-close" @click="showError = false" aria-label="Close"></button>
+      </div>
+    </div>
+    
     <BRow>
       <!-- Bowl A -->
       <BCol cols="4">
@@ -67,12 +75,84 @@ let draggedClip = null
 let sourceBowl = null
 // const baseURL = `${window.location.protocol}//${window.location.host}/api`;
 const baseURL = 'http://127.0.0.1:5000';
+const errorMessage = ref('');
+const showError = ref(false);
+
+// Collection of AML-themed unauthorized error messages
+const unauthorizedMessages = [
+  "🚨 SUSPICIOUS ACTIVITY REPORT: Unusual paperclip movement pattern detected. Transaction blocked pending enhanced due diligence.",
+  
+  "🔍 KYC VERIFICATION FAILED: Your identity hasn't been verified for this high-risk paperclip transaction. Please complete the customer due diligence process.",
+  
+  "⛔ SANCTIONS ALERT: This paperclip appears on the Office of Foreign Assets Control (OFAC) specially designated nationals list. Transfer blocked.",
+  
+  "🔐 COMPLIANCE BREACH: Attempted paperclip movement violates the Anti-Paperclip Laundering Act of 2023. This incident will be reported to FinCEN.",
+  
+  "⚠️ RISK RATING ELEVATED: Your paperclip risk score has exceeded threshold (999+). Please contact the compliance department for remediation.",
+  
+  "🧐 BENEFICIAL OWNERSHIP UNCLEAR: Cannot determine the ultimate beneficial owner of this paperclip. Transaction rejected per CDD Final Rule.",
+  
+  "📊 UNUSUAL TRANSACTION: This paperclip movement deviates from your established baseline activity pattern. Additional verification required.",
+  
+  "📝 MISSING DOCUMENTATION: Paperclip source of funds declaration required. Please submit origin of paperclip attestation form.",
+  
+  "🌐 JURISDICTIONAL CONTROL FAILURE: This paperclip movement crosses high-risk jurisdictions without proper AML controls. Transfer rejected.",
+  
+  "💼 REGULATORY COMPLIANCE NOTICE: Your PEP (Politically Exposed Paperclip) requires senior management approval before movement.",
+  
+  "🔒 BLOCKCHAIN COMPLIANCE ERROR: This paperclip's transaction history contains obfuscated hops through mixing services. Movement prohibited.",
+  
+  "📱 DIGITAL IDENTITY VERIFICATION FAILED: Your biometric paperclip manipulation credentials have been declined. Please try another authentication method.",
+];
+
+// Function to get a random unauthorized message
+function getRandomUnauthorizedMessage() {
+  const randomIndex = Math.floor(Math.random() * unauthorizedMessages.length);
+  return unauthorizedMessages[randomIndex];
+}
+
+// Function to extract token from URL and store it
+function extractAndStoreToken() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
+  
+  if (token) {
+    localStorage.setItem('paperclipAuthToken', token);
+    // Clean URL by removing the token parameter
+    const newUrl = window.location.pathname + window.location.hash;
+    window.history.replaceState({}, document.title, newUrl);
+  }
+}
+
+// Function to get the stored token
+function getAuthToken() {
+  return localStorage.getItem('paperclipAuthToken');
+}
 
 onMounted(async () => {
-  const response = await axios.get(`${baseURL}/get_state`)
-  generateClips(response.data.left, leftClips, 'L')
-  generateClips(response.data.right, rightClips, 'R')
+  // Extract and store token if present in URL
+  extractAndStoreToken();
+  
+  try {
+    const response = await axios.get(`${baseURL}/get_state`)
+    generateClips(response.data.left, leftClips, 'L')
+    generateClips(response.data.right, rightClips, 'R')
+  } catch (error) {
+    console.error("Failed to fetch initial state:", error);
+    showErrorMessage("Failed to load paperclips. Please refresh the page.");
+  }
 })
+
+// Function to display error messages
+function showErrorMessage(message, duration = 5000) {
+  errorMessage.value = message;
+  showError.value = true;
+  
+  // Hide error message after duration
+  setTimeout(() => {
+    showError.value = false;
+  }, duration);
+}
 
 function generateClips(clips, targetClips) {
   function createClipObject(clip) {
@@ -102,23 +182,49 @@ async function dropClipTo(destination, event) {
 
   const direction = sourceBowl === 'left' ? 'left_to_right' : 'right_to_left'
   try {
-    await axios.post(`${baseURL}/move_clip`, {id : clipId , direction})
+    // Include the auth token in the request
+    const token = getAuthToken();
+    await axios.post(`${baseURL}/move_clip`, {
+      id: clipId,
+      direction,
+      token: token
+    });
+    
+    // If successful, update the UI
+    const fromArray = sourceBowl === 'left' ? leftClips : rightClips
+    const toArray = destination === 'right' ? rightClips : leftClips
+
+    fromArray.value = fromArray.value.filter(c => c !== draggedClip)
+    toArray.value.push({...draggedClip})
+    
   } catch (e) {
-    console.error("Failed to update backend:", e)
-    return
+    console.error("Failed to update backend:", e);
+    
+    // Handle unauthorized error
+    if (e.response && (e.response.status === 401 || e.response.status === 403)) {
+      showErrorMessage(getRandomUnauthorizedMessage());
+    } else {
+      showErrorMessage("Error moving paperclip: " + (e.response?.data?.message || "Something went wrong"));
+    }
+    return;
+  } finally {
+    draggedClip = null;
+    sourceBowl = null;
   }
-
-  const fromArray = sourceBowl === 'left' ? leftClips : rightClips
-  const toArray = destination === 'right' ? rightClips : leftClips
-
-  fromArray.value = fromArray.value.filter(c => c !== draggedClip)
-  toArray.value.push({...draggedClip})
-  draggedClip = null
-  sourceBowl = null
 }
 </script>
 
 <style scoped>
+.error-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  max-width: 80%;
+  width: 500px;
+}
+
 .bowl {
   background: white;
   padding: 16px;
