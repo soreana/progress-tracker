@@ -1,12 +1,14 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import json
+import os
 from pathlib import Path
 
 app = Flask(__name__)
 CORS(app)
 
 STATE_FILE = Path("bowl_state.json")
+SECRET_TOKEN = os.environ.get("PAPERCLIP_TOKEN", "super-secret-token")
 
 def load_state():
     with STATE_FILE.open() as f:
@@ -27,6 +29,10 @@ def move_clip():
         print(data)
         clip_id = int(data.get("id"))
         direction = data.get("direction")
+        token = data.get("token")
+
+        if token != SECRET_TOKEN:
+            return jsonify({"error": "Unauthorized"}), 401
 
         bowl_state = load_state()
 

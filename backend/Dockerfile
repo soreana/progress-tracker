@@ -20,6 +20,7 @@ EXPOSE 5000
 ENV FLASK_APP=app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV FLASK_ENV=production
+ENV PAPERCLIP_TOKEN=1f2d4e7bfae448ba8c7df5c8f49b0c43b61863fd59b287b2e2de9d43115e3941
 
 # Run the Flask app
 CMD ["flask", "run"]
